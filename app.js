@@ -13,17 +13,20 @@ let ROAD_SIZE;
 let ROAD_HEIGHT;
 let HIDE_ROAD_SIZE;
 let ROAD_MINI_SIZE;
+let ROAD_NEXT_DISTANCE;
 let WALL_SIZE;
 let POWER_WIDTH;
 let POWER_HEIGHT;
 let POWER_SPEED;
+let POWER_RANGE;
 let CURRENTY_MOVE_SPEED;
 let PLAYER_DOWN_SPEED;
 let SHORT_ROAD_RANGE;
 let ADD_SPEED;
 let ADD_SPEED_RANGE;
-let HIDE_RATE = 5;
+let HIDE_RATE = 4;
 let NONE_RATE = 1;
+let SHOW_COUNT = 40;
 
 let player = { x: canvas.width / 2, y: 0, direct: 'right' }
 let roads = [];
@@ -47,15 +50,19 @@ function resize() {
     ROAD_HEIGHT = 10 * HEIGHT_SCALE;
     HIDE_ROAD_SIZE = 75 * WIDTH_SCALE;
     ROAD_MINI_SIZE = 75 * WIDTH_SCALE;
+    ROAD_NEXT_DISTANCE = 50 * HEIGHT_SCALE;
     WALL_SIZE = 20 * WIDTH_SCALE;
     POWER_WIDTH = 100 * WIDTH_SCALE;
     POWER_HEIGHT = 20 * WIDTH_SCALE;
     POWER_SPEED = 3 * WIDTH_SCALE;
+    POWER_RANGE = 15 * WIDTH_SCALE;
     CURRENTY_MOVE_SPEED = 20 * HEIGHT_SCALE;
     PLAYER_DOWN_SPEED = 10 * HEIGHT_SCALE;
     SHORT_ROAD_RANGE = 50 * WIDTH_SCALE;
     ADD_SPEED = 0.5 * WIDTH_SCALE;
     ADD_SPEED_RANGE = 500 * WIDTH_SCALE;
+    SCORE_FONT_SIZE = parseInt(32* WIDTH_SCALE);
+    GAMEOVER_FONT_SIZE = parseInt(60* WIDTH_SCALE);
 }
 
 function cleanCanvas() {
@@ -70,9 +77,15 @@ function paintWall() {
 
 function paintPower() {
     ctx.fillStyle = 'darkgreen';
-    ctx.fillRect(WALL_SIZE, 10, POWER_WIDTH, POWER_HEIGHT);
+    ctx.fillRect(WALL_SIZE, 10*HEIGHT_SCALE, POWER_WIDTH, POWER_HEIGHT);
     ctx.fillStyle = 'green';
-    ctx.fillRect(WALL_SIZE, 10, power, POWER_HEIGHT);
+    ctx.fillRect(WALL_SIZE, 10*HEIGHT_SCALE, power, POWER_HEIGHT);
+    ctx.fillStyle = 'darkred';
+    ctx.fillRect(WALL_SIZE+POWER_WIDTH-POWER_RANGE, 10*HEIGHT_SCALE,POWER_RANGE, POWER_HEIGHT);
+    if(power>POWER_WIDTH-POWER_RANGE){
+        ctx.fillStyle = 'red';
+        ctx.fillRect(WALL_SIZE+POWER_WIDTH-POWER_RANGE, 10*HEIGHT_SCALE, power-(POWER_WIDTH-POWER_RANGE), POWER_HEIGHT);
+    }
 }
 
 function paintPlayer() {
@@ -96,28 +109,28 @@ function paintRoad(road) {
 }
 
 function paintRoads() {
-    for (let i = showIndex; i < roads.length; i++) {
+    for (let i = showIndex; i < showIndex+SHOW_COUNT; i++) {
         paintRoad(roads[i]);
     }
 }
 
 function paintScore() {
-    ctx.font = "32px Arial";
+    ctx.font = SCORE_FONT_SIZE+"px Arial";
     ctx.fillStyle = "green";
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
-    ctx.fillText("SCORE:" + score, canvas.width - 100, 25);
+    ctx.fillText("SCORE:" + score, canvas.width - 100*WIDTH_SCALE, 25*HEIGHT_SCALE);
 }
 
 function paintGameOver() {
     if (gameOver) {
-        ctx.font = "60px Arial";
+        ctx.font = GAMEOVER_FONT_SIZE+"px Arial";
         ctx.fillStyle = "red";
         ctx.textBaseline = "middle";
         ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-        ctx.font = "32px Arial";
-        ctx.fillText("Space to start", canvas.width / 2, canvas.height / 2 + 50);
+        ctx.font = SCORE_FONT_SIZE+"px Arial";
+        ctx.fillText("Space to start", canvas.width / 2, canvas.height / 2 + 50*HEIGHT_SCALE);
     }
 }
 
@@ -145,7 +158,7 @@ function generateRoads() {
         let hideRoad = rand <= HIDE_RATE;
         let road = {
             x: Math.random() * 100 * WIDTH_SCALE + (200 * WIDTH_SCALE * (i % 2)),
-            y: i * 50 * HEIGHT_SCALE,
+            y: i * ROAD_NEXT_DISTANCE,
             index: i,
             width: (hideRoad ? HIDE_ROAD_SIZE : ROAD_SIZE) - parseInt(i / SHORT_ROAD_RANGE) * 10,
             hide: hideRoad,
@@ -175,6 +188,7 @@ function playerMove() {
         } else {
             if (toPaintY(player.y + currentY) <= 200 * HEIGHT_SCALE) {
                 currentY -= CURRENTY_MOVE_SPEED;
+                showIndex = parseInt(Math.abs(currentY/canvas.height))*14;
                 score = parseInt(Math.abs(currentY / 5));
             }
         }
@@ -221,7 +235,7 @@ function playerMove() {
 
 function checkTouchRoad(originPoint, p) {
     var touchRoad = null;
-    for (let i = showIndex; i < roads.length; i++) {
+    for (let i = showIndex; i < showIndex+SHOW_COUNT; i++) {
         let road = roads[i];
         let roadY = road.y;
         if ((p.x > road.x - PLAYER_SIZE && p.x < road.x + road.width) && roadY <= originPoint.y && roadY >= p.y) {
@@ -259,7 +273,7 @@ function checkPower() {
     if (addPower) {
         power += POWER_SPEED;
         if (power > POWER_WIDTH) {
-            power = 0;
+            power = 30*HEIGHT_SCALE;
         }
     }
 }
@@ -288,7 +302,7 @@ function updateData() {
 }
 
 function checkGameOver() {
-    if (player.y + currentY < -30 * HEIGHT_SCALE) {
+    if (player.y + currentY <= -PLAYER_SIZE) {
         gameOver = true;
     }
 }
@@ -299,7 +313,7 @@ function controlPower() {
     }
     if (jumpOrigin == null) {
         if (power == 0) {
-            power = 30;
+            power = 30*HEIGHT_SCALE;
         }
         addPower = true;
     }
@@ -307,7 +321,10 @@ function controlPower() {
 
 function jump() {
     addPower = false;
-    if (jumpOrigin == null && power >= 30) {
+    if (jumpOrigin == null && power >= 30*HEIGHT_SCALE) {
+        if(power>=POWER_WIDTH-POWER_RANGE){
+            power=POWER_WIDTH+30*HEIGHT_SCALE;
+        }
         jumpOrigin = { x: player.x, y: player.y, power: power };
         updateJumpTime();
     }
@@ -343,4 +360,5 @@ body.addEventListener('touchend', (evt) => {
 });
 
 resize();
+generateRoads();
 setInterval(refresh, 1000 / 60);
