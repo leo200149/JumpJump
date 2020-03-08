@@ -109,7 +109,7 @@ function paintRoad(road) {
 }
 
 function paintRoads() {
-    for (let i = showIndex; i < showIndex+SHOW_COUNT; i++) {
+    for (let i = showIndex; i < roads.length; i++) {
         paintRoad(roads[i]);
     }
 }
@@ -188,7 +188,7 @@ function playerMove() {
         } else {
             if (toPaintY(player.y + currentY) <= 200 * HEIGHT_SCALE) {
                 currentY -= CURRENTY_MOVE_SPEED;
-                showIndex = parseInt(Math.abs(currentY/canvas.height))*14;
+                //showIndex = parseInt(Math.abs(currentY/canvas.height))*14;
                 score = parseInt(Math.abs(currentY / 5));
             }
         }
@@ -235,7 +235,7 @@ function playerMove() {
 
 function checkTouchRoad(originPoint, p) {
     var touchRoad = null;
-    for (let i = showIndex; i < showIndex+SHOW_COUNT; i++) {
+    for (let i = showIndex; i < roads.length; i++) {
         let road = roads[i];
         let roadY = road.y;
         if ((p.x > road.x - PLAYER_SIZE && p.x < road.x + road.width) && roadY <= originPoint.y && roadY >= p.y) {
@@ -273,7 +273,7 @@ function checkPower() {
     if (addPower) {
         power += POWER_SPEED;
         if (power > POWER_WIDTH) {
-            power = 30*HEIGHT_SCALE;
+            power = 30*WIDTH_SCALE;
         }
     }
 }
@@ -321,9 +321,9 @@ function controlPower() {
 
 function jump() {
     addPower = false;
-    if (jumpOrigin == null && power >= 30*HEIGHT_SCALE) {
+    if (jumpOrigin == null && power >= 30*WIDTH_SCALE) {
         if(power>=POWER_WIDTH-POWER_RANGE){
-            power=POWER_WIDTH+30*HEIGHT_SCALE;
+            power=POWER_WIDTH+5*WIDTH_SCALE;
         }
         jumpOrigin = { x: player.x, y: player.y, power: power };
         updateJumpTime();
